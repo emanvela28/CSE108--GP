@@ -2,82 +2,108 @@
 <html>
 <head>
     <title>Student Dashboard</title>
-    <link rel="stylesheet" href = "dashboard.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        body { font-family: Arial; background-color: #dbe4f0; padding: 20px; }
+        .header, .content { text-align: center; }
+        table { margin: 0 auto; border-collapse: collapse; width: 90%; }
+        th, td { padding: 10px; border: 1px solid #999; text-align: center; }
+        th { background-color: #6c91bf; color: white; }
+        td { background-color: #f2f2f2; }
+        .tab-header { display: flex; justify-content: center; margin-bottom: 15px; }
+        .tab { padding: 10px 20px; cursor: pointer; }
+        .tab.active { background-color: #6c91bf; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        button { border: none; background: none; cursor: pointer; font-size: 20px; }
+    </style>
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+        }
+    </script>
 </head>
 <body>
     <div class="header">
+        <h2>ACME University</h2>
         <div>Welcome {{ current_user.username }}!</div>
-        <div><h2>ACME University </h2></div>
-        <div><a href="{{ url_for('main.logout') }}">Sign out</a></div>
-    </div>
-    
-    <div class="content">
-        <div class="tab-header">
-            <div class="tab active" onclick="switchTab('your-courses')">Your Courses</div>
-            <div class="tab" onclick="switchTab('add-courses')">Add Courses</div>
-        </div>
-        
-        <div id="your-courses" class="tab-content active">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Course Name</th>
-                        <th>Teacher</th>
-                        <th>Time</th>
-                        <th>Students Enrolled</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>course</td>
-                        <td>professor</td>
-                        <td>time</td>
-                        <td>0/10</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <div id="add-courses" class="tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Course Name</th>
-                        <th>Teacher</th>
-                        <th>Time</th>
-                        <th>Students Enrolled</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>course</td>
-                        <td>professor</td>
-                        <td>time</td>
-                        <td>0/10</td>
-                        <td><button>Enroll</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <a href="{{ url_for('main.logout') }}">Sign out</a>
     </div>
 
-    <script>
-        function switchTab(tabId) {
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            document.getElementById(tabId).classList.add('active');
+    <div class="tab-header">
+        <div class="tab active" data-tab="your-courses" onclick="switchTab('your-courses')">Your Courses</div>
+        <div class="tab" data-tab="add-courses" onclick="switchTab('add-courses')">Add Courses</div>
+    </div>
 
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
+    <!-- Your Courses -->
+    <div id="your-courses" class="tab-content active">
+        <table>
+            <thead>
+                <tr>
+                    <th>Course Name</th>
+                    <th>Teacher</th>
+                    <th>Time</th>
+                    <th>Students Enrolled</th>
+                    <th>Drop</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in all_courses %}
+                {% if course.id in enrolled_course_ids %}
+                <tr>
+                    <td>{{ course.name }}</td>
+                    <td>{{ course.teacher.username }}</td>
+                    <td>{{ course.time }}</td>
+                    <td>{{ course.enrollments | length }}/{{ course.capacity }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('main.drop', course_id=course.id) }}">
+                            <button type="submit" title="Drop Course">➖</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-            event.currentTarget.classList.add('active');
-        }
-    </script>
+    <!-- Add Courses -->
+    <div id="add-courses" class="tab-content">
+        <table>
+            <thead>
+                <tr>
+                    <th>Course Name</th>
+                    <th>Teacher</th>
+                    <th>Time</th>
+                    <th>Students Enrolled</th>
+                    <th>Add</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in all_courses %}
+                {% if course.id not in enrolled_course_ids %}
+                <tr>
+                    <td>{{ course.name }}</td>
+                    <td>{{ course.teacher.username }}</td>
+                    <td>{{ course.time }}</td>
+                    <td>{{ course.enrollments | length }}/{{ course.capacity }}</td>
+                    <td>
+                        {% if course.enrollments | length < course.capacity %}
+                        <form method="POST" action="{{ url_for('main.enroll', course_id=course.id) }}">
+                            <button type="submit" title="Add Course">➕</button>
+                        </form>
+                        {% else %}
+                        Full
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

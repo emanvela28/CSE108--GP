@@ -2,10 +2,50 @@
 <html>
 <head>
     <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
 </head>
 <body>
-    <h1>Welcome, {{ current_user.username }} (Teacher)</h1>
-    <p>This is your teacher dashboard.</p>
-    <a href="{{ url_for('main.logout') }}">Sign Out</a>
+    <div class="header">
+        <div>Welcome, {{ current_user.username }} (Teacher)</div>
+        <div><h2>ACME University</h2></div>
+        <div><a href="{{ url_for('main.logout') }}">Sign Out</a></div>
+    </div>
+
+    <div class="content">
+        <div class="tab-header">
+            <div class="tab active" onclick="switchTab('your-courses')">Your Courses</div>
+        </div>
+
+        <div id="your-courses" class="tab-content active">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Teacher</th>
+                        <th>Time</th>
+                        <th>Students Enrolled</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('main.course_details', course_id=course.id) }}">
+                                {{ course.name }}
+                            </a>
+                        </td>
+                        <td>{{ current_user.username }}</td>
+                        <td>{{ course.time }}</td>
+                        <td>{{ course.enrollment_count }}/{{ course.capacity }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">You are not teaching any courses.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ course.name }} Details</title>
+</head>
+<body>
+    <h1>Course: {{ course.name }}</h1>
+    <p><strong>Instructor:</strong> {{ teacher.username }}</p>
+    <p><strong>Time:</strong> {{ course.time }}</p>
+    <p><strong>Capacity:</strong> {{ course.capacity }}</p>
+
+    <h2>Enrolled Students</h2>
+    {% if students %}
+        <ul>
+        {% for student in students %}
+            <li>{{ student.username }} - Grade: {{ student.enrollments[0].grade }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No students enrolled.</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('main.teacher_dashboard') }}">← Back to Dashboard</a>
+</body>
+</html>

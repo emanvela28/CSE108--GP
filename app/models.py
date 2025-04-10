@@ -18,6 +18,7 @@ class Course(db.Model):
     name = db.Column(db.String(100), nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    time = db.Column(db.String(100), nullable=False)
 
     enrollments = db.relationship('Enrollment', backref='course', lazy=True)
 

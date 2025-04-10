@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import User
 from .forms import LoginForm
-from . import db, login_manager
+from . import db, login_manager, bcrypt
 
 main = Blueprint('main', __name__)
 
@@ -20,7 +20,8 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and user.password == form.password.data:  # For demo only! Use hashed passwords in production
+        # if user and user.password == form.password.data:  # For demo only! Use hashed passwords in production
+        if user and bcrypt.check_password_hash(user.password, form.password.data): #changed password to use bcrypt
             login_user(user)
             flash('Logged in successfully!', 'success')
             if user.role == 'student':

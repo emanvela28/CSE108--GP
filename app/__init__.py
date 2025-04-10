@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -6,6 +7,7 @@ from flask_login import LoginManager
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'main.login'
+bcrypt = Bcrypt()
 
 def create_app():
     app = Flask(__name__)
@@ -24,3 +26,5 @@ def create_app():
     app.register_blueprint(main)
 
     return app
+
+

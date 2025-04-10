@@ -18,8 +18,8 @@ with app.app_context():
     #hashed test users
     hashed_pw_sally = bcrypt.generate_password_hash('pass123').decode('utf-8')
     student = User(username='sally', password=hashed_pw_sally, role='student')
-    hashed_pw_santosh = bcrypt.generate_password_hash('teach123').decode('utf-8')
-    teacher = User(username='Santosh', password=hashed_pw_santosh, role='teacher')
+    hashed_pw_tony = bcrypt.generate_password_hash('teach123').decode('utf-8')
+    teacher = User(username='tony', password=hashed_pw_tony, role='teacher')
     hashed_pw_admin = bcrypt.generate_password_hash('admin123').decode('utf-8')
     admin = User(username='admin1', password=hashed_pw_admin, role='admin')
     db.session.add_all([student, teacher, admin])

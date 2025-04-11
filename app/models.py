@@ -1,7 +1,9 @@
 from . import db
 from flask_login import UserMixin
 
-# User model with roles: student, teacher, admin
+# ----------------------------
+# User Model
+# ----------------------------
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -9,10 +11,12 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(10), nullable=False)  # 'student', 'teacher', 'admin'
 
     # Relationships
-    enrollments = db.relationship('Enrollment', backref='student', lazy=True)
-    courses_taught = db.relationship('Course', backref='teacher', lazy=True)
+    courses_taught = db.relationship('Course', backref='teacher', lazy=True, cascade='all, delete-orphan')
 
-# Course model
+
+# ----------------------------
+# Course Model
+# ----------------------------
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -20,11 +24,16 @@ class Course(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     time = db.Column(db.String(100), nullable=False)
 
-    enrollments = db.relationship('Enrollment', backref='course', lazy=True)
 
-# Enrollment model (joins User and Course)
+# ----------------------------
+# Enrollment Model
+# ----------------------------
 class Enrollment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    grade = db.Column(db.String(2))  # e.g., 'A', 'B+', etc.
+    grade = db.Column(db.String(2))
+
+    student = db.relationship('User', foreign_keys=[user_id])
+    course = db.relationship('Course', foreign_keys=[course_id])
+

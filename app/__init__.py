@@ -65,12 +65,20 @@ class UserAdmin(SecureModelView):
 
     def on_model_change(self, form, model, is_created):
         raw_password = form.password.data
+
+        # Hash password if new or changed
         if raw_password:
             if not raw_password.startswith("$2b$"):
                 model.password = bcrypt.generate_password_hash(raw_password).decode('utf-8')
-        elif is_created:
-            flash("⚠️ Password is required for new users.", "error")
-            raise ValueError("Password cannot be empty for new users.")
+        else:
+            # If no password was entered on edit, preserve the existing one
+            if not is_created:
+                existing = User.query.get(model.id)
+                model.password = existing.password
+            else:
+                flash("⚠️ Password is required for new users.", "error")
+                raise ValueError("Password cannot be empty for new users.")
+
 
 # CourseAdmin with teacher name display
 class CourseAdmin(SecureModelView):

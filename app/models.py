@@ -11,7 +11,11 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(10), nullable=False)  # 'student', 'teacher', 'admin'
 
     # Relationships
+    enrollments = db.relationship('Enrollment', back_populates='student', lazy=True, cascade='all, delete-orphan')
     courses_taught = db.relationship('Course', backref='teacher', lazy=True, cascade='all, delete-orphan')
+
+    def __str__(self):
+        return self.username
 
 
 # ----------------------------
@@ -24,6 +28,11 @@ class Course(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     time = db.Column(db.String(100), nullable=False)
 
+    enrollments = db.relationship('Enrollment', back_populates='course', lazy=True, cascade='all, delete-orphan')
+
+    def __str__(self):
+        return self.name
+
 
 # ----------------------------
 # Enrollment Model
@@ -34,6 +43,6 @@ class Enrollment(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
     grade = db.Column(db.String(2))
 
-    student = db.relationship('User', foreign_keys=[user_id])
-    course = db.relationship('Course', foreign_keys=[course_id])
-
+    # Relationships (used in Flask-Admin and app logic)
+    student = db.relationship('User', back_populates='enrollments')
+    course = db.relationship('Course', back_populates='enrollments')

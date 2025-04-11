@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>Student Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
     <style>
         body { font-family: Arial; background-color: #dbe4f0; padding: 20px; }
         .header, .content { text-align: center; }
@@ -16,6 +15,27 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         button { border: none; background: none; cursor: pointer; font-size: 20px; }
+        
+        .flash-messages {
+            margin: 10px auto;
+            width: 90%;
+            text-align: center;
+        }
+        .flash {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .flash-success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .flash-error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
     </style>
     <script>
         function switchTab(tabId) {
@@ -24,6 +44,18 @@
             document.getElementById(tabId).classList.add('active');
             document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
         }
+
+        function confirmDrop(courseName) {
+            return confirm(`Are you sure you want to drop ${courseName}?`);
+        }
+        
+        setTimeout(() => {
+            const flashes = document.querySelectorAll('.flash');
+            flashes.forEach(flash => {
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 300);
+            });
+        }, 2000);
     </script>
 </head>
 <body>
@@ -33,12 +65,21 @@
         <a href="{{ url_for('main.logout') }}">Sign out</a>
     </div>
 
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
     <div class="tab-header">
         <div class="tab active" data-tab="your-courses" onclick="switchTab('your-courses')">Your Courses</div>
         <div class="tab" data-tab="add-courses" onclick="switchTab('add-courses')">Add Courses</div>
     </div>
 
-    <!-- Your Courses -->
     <div id="your-courses" class="tab-content active">
         <table>
             <thead>
@@ -59,7 +100,8 @@
                     <td>{{ course.time }}</td>
                     <td>{{ course.enrollments | length }}/{{ course.capacity }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('main.drop', course_id=course.id) }}">
+                        <form method="POST" action="{{ url_for('main.drop', course_id=course.id) }}" 
+                              onsubmit="return confirmDrop('{{ course.name }}')">
                             <button type="submit" title="Drop Course">➖</button>
                         </form>
                     </td>
@@ -70,7 +112,6 @@
         </table>
     </div>
 
-    <!-- Add Courses -->
     <div id="add-courses" class="tab-content">
         <table>
             <thead>

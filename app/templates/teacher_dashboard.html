@@ -1,11 +1,56 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Teacher Dashboard</title>
-</head>
-<body>
-    <h1>Welcome, {{ current_user.username }} (Teacher)</h1>
-    <p>This is your teacher dashboard.</p>
-    <a href="{{ url_for('main.logout') }}">Sign Out</a>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+  <a class="navbar-brand" href="#">ACME University</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+     <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <span class="navbar-text mr-3">
+          Welcome, {{ current_user.username }} (Teacher)!
+        </span>
+      </li>
+      <li class="nav-item">
+        <a class="btn btn-outline-danger btn-sm" href="{{ url_for('main.logout') }}">Sign Out</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">My Courses</h2>
+<table class="table table-hover table-bordered">
+    <thead class="thead">
+        <tr>
+            <th>Course Name</th>
+            <th>Time</th>
+            <th>Enrollment</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for course in courses %}
+        <tr>
+            <td>{{ course.name }}</td>
+            <td>{{ course.time }}</td>
+            <td>{{ course.enrollment_count }}/{{ course.capacity }}</td>
+            <td>
+                <a href="{{ url_for('main.course_details', course_id=course.id) }}" class="btn btn-primary btn-sm">
+                    View Details
+                </a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" class="text-center text-muted">You are not currently teaching any courses.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,26 +1,59 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ course.name }} Details</title>
-</head>
-<body>
-    <h1>Course: {{ course.name }}</h1>
-    <p><strong>Instructor:</strong> {{ teacher.username }}</p>
-    <p><strong>Time:</strong> {{ course.time }}</p>
-    <p><strong>Capacity:</strong> {{ course.capacity }}</p>
+{% extends "base.html" %}
 
-    <h2>Enrolled Students</h2>
-    {% if students %}
-        <ul>
-        {% for student in students %}
-            <li>{{ student.username }} - Grade: {{ student.enrollments[0].grade }}</li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No students enrolled.</p>
-    {% endif %}
+{% block title %}{{ course.name }} Details{% endblock %}
 
-    <br>
-    <a href="{{ url_for('main.teacher_dashboard') }}">← Back to Dashboard</a>
-</body>
-</html>
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+  <a class="navbar-brand" href="#">ACME University</a>
+   <div class="collapse navbar-collapse" id="navbarNav">
+     <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+         <a class="nav-link" href="{{ url_for('main.teacher_dashboard') }}">← Back to Dashboard</a>
+        </li>
+     </ul>
+     <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <span class="navbar-text mr-3">
+          Viewing Course (Teacher: {{ teacher.username }})
+        </span>
+      </li>
+      <li class="nav-item">
+        <a class="btn btn-outline-danger btn-sm" href="{{ url_for('main.logout') }}">Sign Out</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="mb-0">Course: {{ course.name }}</h3>
+    </div>
+    <div class="card-body">
+        <p><strong>Instructor:</strong> {{ teacher.username }}</p>
+        <p><strong>Time:</strong> {{ course.time }}</p>
+        <p><strong>Capacity:</strong> {{ course.capacity }}</p>
+        <p><strong>Currently Enrolled:</strong> {{ enrollments | length }}</p>
+    </div>
+</div>
+
+
+<h4 class="mt-4">Enrolled Students</h4>
+{% if enrollments %}
+    <ul class="list-group">
+    {% for enrollment in enrollments %}
+         <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ enrollment.student.username }}</span>
+            <form method="POST" action="{{ url_for('main.edit_grade', enrollment_id=enrollment.id) }}" class="grade-form form-inline ml-3">
+                <label for="grade-{{ enrollment.id }}" class="sr-only">Grade:</label> <input type="text" id="grade-{{ enrollment.id }}" name="grade" value="{{ enrollment.grade if enrollment.grade is not none else '' }}" class="form-control form-control-sm grade-input mr-2" placeholder="Grade">
+                <button type="submit" class="btn btn-success btn-sm">Update</button>
+            </form>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">No students are currently enrolled in this course.</p>
+{% endif %}
+
+{% endblock %}

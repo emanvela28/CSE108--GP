@@ -9,6 +9,8 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'student', 'teacher', 'admin'
+    full_name = db.Column(db.String(100))  # or whatever length you prefer
+
 
     # Relationships
     enrollments = db.relationship('Enrollment', back_populates='student', lazy=True, cascade='all, delete-orphan')

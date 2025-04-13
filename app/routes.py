@@ -60,11 +60,16 @@ def student_dashboard():
     all_courses = Course.query.all()
     enrolled_course_ids = [e.course_id for e in current_user.enrollments]
 
+    # 👇 Extract first name from full_name
+    first_name = current_user.full_name.split()[0]
+
     return render_template(
         'student_dashboard.html',
         all_courses=all_courses,
-        enrolled_course_ids=enrolled_course_ids
+        enrolled_course_ids=enrolled_course_ids,
+        first_name=first_name
     )
+
 
 @main.route('/all-classes')
 @login_required
@@ -83,18 +88,18 @@ def enroll(course_id):
         flash("Access denied.", "danger")
         return redirect(url_for('main.login'))
 
-    course = Course.query.get(course_id)
-    if not course or len(course.enrollments) >= course.capacity:
-        flash("Course full or not found.")
+    course = Course.query.get_or_404(course_id)
+    if len(course.enrollments) >= course.capacity:
+        flash("Course is full.", "error")
         return redirect(url_for('main.student_dashboard'))
 
     existing = Enrollment.query.filter_by(user_id=current_user.id, course_id=course.id).first()
     if not existing:
         db.session.add(Enrollment(user_id=current_user.id, course_id=course.id))
         db.session.commit()
-        flash("Enrolled successfully!")
+        flash("Enrolled successfully!", "success")
     else:
-        flash("You are already enrolled in this course.")
+        flash("You are already enrolled in this course.", "warning")
 
     return redirect(url_for('main.student_dashboard'))
 
@@ -109,9 +114,9 @@ def drop(course_id):
     if enrollment:
         db.session.delete(enrollment)
         db.session.commit()
-        flash("Dropped course.")
+        flash("Dropped course successfully.", "success")
     else:
-        flash("You are not enrolled in this course.")
+        flash("You are not enrolled in this course.", "error")
 
     return redirect(url_for('main.student_dashboard'))
 
@@ -129,26 +134,62 @@ def teacher_dashboard():
 
     courses = Course.query.filter_by(teacher_id=current_user.id).all()
 
-    # Annotate with enrollment count
     for course in courses:
         course.enrollment_count = len(course.enrollments)
 
-    return render_template('teacher_dashboard.html', courses=courses)
+    # Extract last name from full_name
+    last_name = current_user.full_name.split()[-1]
+    greeting = f"Welcome, Dr. {last_name}!"
 
+    return render_template('teacher_dashboard.html', courses=courses, greeting=greeting)
+
+
+# adjusted course details
 @main.route('/course/<int:course_id>')
 @login_required
 def course_details(course_id):
-    course = Course.query.get(course_id)
-    if not course or course.teacher_id != current_user.id:
-        flash("Course not found or access denied.", "danger")
+    if current_user.role != 'teacher':
+        flash("Access denied.", "danger")
+        return redirect(url_for('main.login'))
+
+    course = Course.query.get_or_404(course_id)
+
+    if course.teacher_id != current_user.id:
+        flash("You do not have permission to view details for this course.", "danger")
         return redirect(url_for('main.teacher_dashboard'))
 
-    enrolled_students = [enrollment.student for enrollment in course.enrollments]
+    enrollments = Enrollment.query.filter_by(course_id=course.id).all()
 
     return render_template(
         'course_details.html',
         course=course,
         teacher=current_user,
-        students=enrolled_students
+        enrollments=enrollments
     )
 
+# added new route for changing grades
+@main.route('/edit_grade/<int:enrollment_id>', methods=['POST'])
+@login_required
+def edit_grade(enrollment_id):
+    if current_user.role != 'teacher':
+        flash("Access denied.", "danger")
+        return redirect(url_for('main.login'))
+
+    enrollment = Enrollment.query.get_or_404(enrollment_id)
+    course = enrollment.course
+
+    if course.teacher_id != current_user.id:
+        flash("You do not have permission to edit grades for this course.", "danger")
+        return redirect(url_for('main.teacher_dashboard'))
+
+    new_grade = request.form.get('grade')
+
+    enrollment.grade = new_grade
+    try:
+        db.session.commit()
+        flash(f"Grade updated successfully for {enrollment.student.username}.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error updating grade: {str(e)}", "danger")
+
+    return redirect(url_for('main.course_details', course_id=course.id))

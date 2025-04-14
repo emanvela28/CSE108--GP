@@ -8,6 +8,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField
 from wtforms.validators import DataRequired
 from wtforms.fields import SelectField
+from flask_admin.menu import MenuLink
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -114,7 +115,6 @@ class EnrollmentAdmin(SecureModelView):
     }
 
 
-
 # App factory
 def create_app():
     app = Flask(__name__)
@@ -133,5 +133,6 @@ def create_app():
     admin.add_view(UserAdmin(User, db.session))
     admin.add_view(CourseAdmin(Course, db.session))
     admin.add_view(EnrollmentAdmin(Enrollment, db.session))
+    admin.add_link(MenuLink(name='Logout', category='', url='/logout'))
 
     return app

@@ -44,6 +44,7 @@ class MyAdminIndexView(AdminIndexView):
 # Admin Form
 class UserForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
+    full_name = StringField('Full Name', validators=[DataRequired()])
     password = PasswordField('Password')  # Optional unless creating a new user
     role = SelectField('Role', choices=[
         ('student', 'Student'),
@@ -55,8 +56,9 @@ class UserForm(FlaskForm):
 class UserAdmin(SecureModelView):
     form = UserForm
     column_exclude_list = ['password']
-    column_searchable_list = ['username', 'role']
+    column_searchable_list = ['username', 'role', 'full_name']
     column_filters = ['role']
+    column_list = ['username', 'full_name', 'role']
 
     def delete_model(self, model):
         if model.role == 'teacher' and model.courses_taught:

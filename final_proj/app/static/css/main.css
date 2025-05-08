@@ -1,0 +1,122 @@
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa; /* Light grey background like Bootstrap default */
+    padding-top: 56px; /* Adjust if using a fixed navbar */
+    color: #343a40; /* Darker text color */
+}
+
+/* Header/Navbar styling (Example) */
+.navbar {
+    margin-bottom: 20px;
+}
+
+/* Container adjustments */
+.container {
+    padding-top: 20px;
+}
+
+/* Login Box Styling */
+.login-box {
+    max-width: 450px;
+    margin: 5rem auto; /* Center vertically and horizontally */
+    background: white;
+    padding: 2rem;
+    border-radius: 0.3rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.login-box h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #007bff; /* Bootstrap primary color */
+}
+
+/* Dashboard specific styles */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #dee2e6; /* Bootstrap border color */
+    background-color: #e9ecef; /* Light background */
+    margin-bottom: 20px;
+}
+
+.dashboard-header h2 {
+    margin: 0;
+    color: #495057; /* Slightly muted color */
+}
+
+/* Table styling */
+.table {
+    margin-top: 20px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.table thead th {
+    background-color: #495057; /* Bootstrap primary color */
+    color: white;
+    border-color: #0056b3; /* Darker border for header */
+}
+
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.btn-enroll {
+    color: #28a745;
+    border: 1px solid #28a745;
+    background-color: transparent;
+}
+.btn-enroll:hover {
+    color: white;
+    background-color: #28a745;
+}
+
+.btn-drop {
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    background-color: transparent;
+}
+.btn-drop:hover {
+    color: white;
+    background-color: #dc3545;
+}
+
+/* Flash messages */
+.alert {
+    margin-top: 15px;
+}
+
+.grade-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.grade-input {
+    width: 60px;
+}
+
+.nav-tabs .nav-link {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.tab-content {
+    border: 1px solid #dee2e6;
+    border-top: 0;
+    padding: 15px;
+    background-color: #fff;
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}

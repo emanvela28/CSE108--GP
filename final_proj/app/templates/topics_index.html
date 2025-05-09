@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - StudentVibes Forum{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Forum Topics</h1>
+    </div>
+
+    {% if topics %}
+        <div class="list-group">
+            {% for topic in topics %}
+                <a href="{{ url_for('main.topic_page', topic_slug=topic.slug) }}" class="list-group-item list-group-item-action flex-column align-items-start mb-2 shadow-sm">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ topic.name }}</h5>
+                    </div>
+                    <p class="mb-1">{{ topic.description | truncate(150) }}</p>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No topics have been created yet.
+            {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('admin.index', _model='topic', _action='create') }}" class="alert-link">Create one in the admin panel?</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

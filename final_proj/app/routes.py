@@ -29,8 +29,12 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 @main.route('/')
-def home():
-    return redirect(url_for('main.login'))
+@main.route('/home')
+@main.route('/topics')
+@login_required
+def topics_index():
+    all_topics = Topic.query.order_by(Topic.name).all()
+    return render_template('topics_index.html', title='Forum Topics', topics = all_topics)
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -40,7 +44,7 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('main.home'))
+            return redirect(url_for('main.topics_index'))
 
         else:
             flash('Login unsuccessful, please check username or password.', 'danger')
@@ -52,3 +56,13 @@ def logout():
     logout_user()
     flash('Logged out successfully.', 'info')
     return redirect(url_for('main.login'))
+
+@main.route('/topic/<topic_slug>')
+@login_required
+def topic_page(topic_slug):
+    topic = Topic.query.filter_by(slug=topic_slug).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    posts_pagination = Post.query
+
+
+    return f"Temp page for topic: {topic.name} (slug: {topic_slug}). Pending posts flow"

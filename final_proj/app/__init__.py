@@ -7,131 +7,94 @@ from flask_admin.contrib.sqla import ModelView
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField
 from wtforms.validators import DataRequired
-from wtforms.fields import SelectField
 
-# Initialize extensions
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'main.login'
+login_manager.login_view = 'main.login' #'main' is blueprint for login
 bcrypt = Bcrypt()
 
-# Secure base model view
 class SecureModelView(ModelView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.role == 'admin'
-    
+        return current_user.is_authenticated and hasattr(current_user, 'role') and current_user.role == 'admin'
+
     def inaccessible_callback(self, name, **kwargs):
+        flash('You do not have permission to access the Admin Panel.', 'danger')
         return redirect(url_for('main.login'))
 
-# Custom admin home
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
     def index(self):
-        if not current_user.is_authenticated or current_user.role != 'admin':
+        if not (current_user.is_authenticated and hasattr(current_user, 'role') and current_user.role == 'admin'):
+            flash('You do not have permission to access the Admin Panel.', 'danger')
             return redirect(url_for('main.login'))
 
-        from .models import User, Course, Enrollment
+        from .models import User, Topic, Post # Import models needed for counts
         user_count = User.query.count()
-        course_count = Course.query.count()
-        enrollment_count = Enrollment.query.count()
-
+        topic_count = Topic.query.count()
+        post_count = Post.query.count()
         return self.render('admin/index.html',
                            user_count=user_count,
-                           course_count=course_count,
-                           enrollment_count=enrollment_count)
+                           topic_count=topic_count,
+                           post_count=post_count)
 
-# Admin Form
 class UserForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password')  # Optional unless creating a new user
+    password = PasswordField('Password') # Password field is optional on edit
     role = SelectField('Role', choices=[
         ('student', 'Student'),
-        ('teacher', 'Teacher'),
+        ('moderator', 'Moderator'),
         ('admin', 'Admin')
-    ])
+    ], validators=[DataRequired()])
 
-# UserAdmin with auto password hashing
 class UserAdmin(SecureModelView):
     form = UserForm
     column_exclude_list = ['password']
     column_searchable_list = ['username', 'role']
     column_filters = ['role']
+    form_columns = ['username', 'password', 'role'] # Explicitly list form columns
+
+    def on_model_change(self, form, model, is_created):
+        if form.password.data:
+            # Hash password if it's provided
+            if not form.password.data.startswith('$2b$'):
+                model.password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        elif not is_created:
+            if model.id: # Check if model has an id (i.e., it exists)
+                temp_user = db.session.get(type(model), model.id)
+                if temp_user:
+                    model.password = temp_user.password
+        elif is_created and not form.password.data:
+            flash("Password is required for new users.", "error")
+            raise ValueError("Password cannot be empty for new users.")
 
     def delete_model(self, model):
-        if model.role == 'teacher' and model.courses_taught:
-            flash("❌ Cannot delete teacher who is assigned to courses.", "error")
+        from .models import Post, Reply # Local import for check
+        if Post.query.filter_by(user_id=model.id).first() or \
+           Reply.query.filter_by(user_id=model.id).first():
+            flash(f"User '{model.username}' has posts or replies and cannot be deleted directly. Please reassign or delete their content first.", "error")
             return False
         return super().delete_model(model)
 
-    def on_model_change(self, form, model, is_created):
-        raw_password = form.password.data
-
-        # Hash password if new or changed
-        if raw_password:
-            if not raw_password.startswith("$2b$"):
-                model.password = bcrypt.generate_password_hash(raw_password).decode('utf-8')
-        else:
-            # If no password was entered on edit, preserve the existing one
-            if not is_created:
-                existing = User.query.get(model.id)
-                model.password = existing.password
-            else:
-                flash("⚠️ Password is required for new users.", "error")
-                raise ValueError("Password cannot be empty for new users.")
-
-
-# CourseAdmin with teacher name display
-class CourseAdmin(SecureModelView):
-    column_list = ['name', 'capacity', 'teacher_name', 'time']
-    column_labels = {'teacher_name': 'Professor'}
-    column_searchable_list = ['name']
-    form_columns = ['name', 'capacity', 'teacher_id', 'time']
-
-    def _teacher_name(view, context, model, name):
-        return model.teacher.username if model.teacher else "N/A"
-
-    column_formatters = {
-        'teacher_name': _teacher_name
-    }
-
-# EnrollmentAdmin with AJAX search fields
-class EnrollmentAdmin(SecureModelView):
-    column_list = ['student.username', 'course.name', 'grade']
-    column_labels = {
-        'student.username': 'Student',
-        'course.name': 'Course',
-        'grade': 'Grade'
-    }
-    form_columns = ['student', 'course', 'grade']  # use relationship fields
-
-    form_ajax_refs = {
-        'student': {
-            'fields': ('username',)
-        },
-        'course': {
-            'fields': ('name',)
-        }
-    }
-
-
-
-# App factory
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'supersecretkey'
+    app.config['SECRET_KEY'] = 'your_super_secret_key_here' # change...?
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../instance/app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['FLASK_ADMIN_SWATCH'] = 'cerulean' # Admin theme...?
 
     db.init_app(app)
     login_manager.init_app(app)
+    bcrypt.init_app(app)
 
-    from .routes import main
-    from .models import User, Course, Enrollment
-    app.register_blueprint(main)
+    from .models import User, Topic, Post, Reply, Vote # Import your forum models
+    from .routes import main as main_blueprint # blueprint is named 'main' in routes.py
+    app.register_blueprint(main_blueprint)
 
-    admin = Admin(app, name='Admin Panel', template_mode='bootstrap4', index_view=MyAdminIndexView())
-    admin.add_view(UserAdmin(User, db.session))
-    admin.add_view(CourseAdmin(Course, db.session))
-    admin.add_view(EnrollmentAdmin(Enrollment, db.session))
+    admin = Admin(app, name='Forum Admin Panel', template_mode='bootstrap4', index_view=MyAdminIndexView(url='/admin'))
+    admin.add_view(UserAdmin(User, db.session, name="Manage Users"))
+    admin.add_view(SecureModelView(Topic, db.session, name="Topics", category="Forum Content"))
+    admin.add_view(SecureModelView(Post, db.session, name="Posts", category="Forum Content"))
+    admin.add_view(SecureModelView(Reply, db.session, name="Replies", category="Forum Content"))
+    admin.add_view(SecureModelView(Vote, db.session, name="Votes", category="Forum Content"))
 
     return app

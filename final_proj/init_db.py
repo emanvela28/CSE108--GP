@@ -11,38 +11,42 @@ def slugify(text):
     return text.strip('-')
 
 with app.app_context():
-
     from app.models import User, Topic, Post, Reply, Vote
 
     db.drop_all()
     db.create_all()
 
-
     #hashed test users
     hashed_pw_sally = bcrypt.generate_password_hash('pass123').decode('utf-8')
     student = User(username='sally', password=hashed_pw_sally, role='student')
 
-    hashed_pw_tony = bcrypt.generate_password_hash('teach123').decode('utf-8')
+    hashed_pw_mike = bcrypt.generate_password_hash('teach123').decode('utf-8')
     moderator_mike = User(username='moderator', password=hashed_pw_mike, role='moderator')
 
     hashed_pw_admin = bcrypt.generate_password_hash('admin123').decode('utf-8')
     admin_user = User(username='admin1', password=hashed_pw_admin, role='admin')
 
-    db.session.add_all([student, moderator_mike, admin_user])
+    topics_data = [
+        {"name": "Cozy Cribs: Decor & Inspiration",
+         "description": "Share your dorm/apartment decor ideas, DIY projects, and room tours!"},
+        {"name": "Functional Fixes: Organization & Hacks",
+         "description": "Tips for maximizing space, storage solutions, and tech setups."},
+        {"name": "Roommate Realities: Advice & Support",
+         "description": "Discuss roommate agreements, conflict resolution, and finding compatible housemates."},
+        {"name": "Swap Shop & Secondhand Treasures",
+         "description": "Buy, sell, or swap furniture, decor, textbooks, and other items."},
+        {"name": "Campus Life & Local Finds (Merced)",
+         "description": "General chat about student life, events, and cool spots around Merced specific to dorm/apartment living."}
+    ]
+
+    created_topics = []
+    for topic_data in topics_data:
+        slug = slugify(topic_data["name"])
+        topic = Topic(name=topic_data["name"], description=topic_data['description'], slug=slug)
+        db.session.add(topic)
+        created_topics.append(topic)
     db.session.commit()
+    print(f"{len(created_topics)} topics created")
 
 
-
-    #test courses
-    course1 = Course(name="CSE 120", capacity=160, teacher_id=teacher.id, time="MW 4:30-5:45 PM")
-    course2 = Course(name="CSE 165", capacity=90, teacher_id=teacher.id, time="TR 11:00 12:15 PM")
-    db.session.add_all([course1, course2])
-    db.session.commit()
-
-    #test enrollments
-    enrolled1 = Enrollment(course_id=course1.id, user_id=student.id, grade="A")
-    enrolled2 = Enrollment(course_id=course2.id, user_id=student.id, grade="B")
-    db.session.add_all([enrolled1, enrolled2])
-    db.session.commit()
-
-    print("Database tables created and test users added!")
+    print("Database tables created and initial info added!")
